@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REM-I Lab Planner</title>
+    
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUkVNLUkgTGFiIFBsYW5uZXIiLCJzaG9ydF9uYW1lIjoiUkVNLUkgUGxhbm5lciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMWUzZDVjIiwidGhlbWVfY29sb3IiOiIjNGY0NmU1IiwiZGVzY3JpcHRpb24iOiJBbiBpbnRlcmFjdGl2ZSBwbGFubmluZyB0b29sIGZvciBSRU0tSSBpbWFnaW5nIGFuZCBzb3J0aW5nIGV4cGVyaW1lbnRzLiJ9">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="REM-I Planner">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #1e1b4b;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4f46e5 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(17, 24, 39, 0.6);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .input-glass {
+            background: rgba(55, 65, 81, 0.5);
+            border: 1px solid rgba(107, 114, 128, 0.4);
+            color: #f1f5f9;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .input-glass::placeholder { color: #9ca3af; }
+        .input-glass:focus {
+            background: rgba(55, 65, 81, 0.8);
+            border-color: #6366f1;
+            outline: none; box-shadow: none;
+        }
+
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+            color: #9ca3af;
+        }
+        .tab-button.active { 
+            border-color: #a5b4fc;
+            color: #e0e7ff; 
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .tab-button:not(.active):hover {
+            background: rgba(55, 65, 81, 0.2);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        
+        .tooltip-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+        .tooltip-icon {
+            cursor: help;
+        }
+        .tooltip-text {
+            visibility: hidden;
+            width: 240px;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="text-slate-200">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <div class="glass-card p-6 sm:p-8">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl sm:text-4xl font-bold text-white tracking-tight">REM-I Lab Planner</h1>
+            </div>
+
+            <div class="mb-6 border-b border-white/10">
+                <nav class="flex -mb-px" aria-label="Tabs">
+                    <button id="tab-imaging" class="tab-button active flex-1 whitespace-nowrap py-3 px-1 font-medium text-sm rounded-t-lg">Imaging</button>
+                    <button id="tab-sorting" class="tab-button flex-1 whitespace-nowrap py-3 px-1 font-medium text-sm rounded-t-lg">Sorting</button>
+                </nav>
+            </div>
+
+            <!-- Main Content Panels -->
+            <div>
+                <!-- Imaging Estimator Panel -->
+                <div id="panel-imaging">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        <!-- Left Column: Inputs -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="targetImages" class="block text-sm font-medium text-slate-300 mb-2">Target Number of Images</label>
+                                <input type="number" id="targetImages" value="100000" class="w-full p-3 rounded-lg text-white input-glass">
+                            </div>
+                            <div>
+                                <div class="tooltip-container">
+                                    <label for="cellConcentration" class="block text-sm font-medium text-slate-300 mb-2 mr-2">Cell Concentration (cells/mL)</label>
+                                    <svg class="w-4 h-4 text-slate-400 tooltip-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span class="tooltip-text">HFM Analysis is only available for concentrations < 3M cells/mL. Throughput is estimated from Table 3, pg. 38 of the User Guide.</span>
+                                </div>
+                                <input type="number" id="cellConcentration" value="500000" class="w-full p-3 rounded-lg text-white input-glass" placeholder="e.g., 500000">
+                            </div>
+                            <div>
+                                <label for="targetThroughput" class="block text-sm font-medium text-slate-300 mb-2">Target Throughput (events/s)</label>
+                                <div class="flex items-center gap-4">
+                                    <input type="range" id="targetThroughput" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" min="0" max="80" step="1" value="9">
+                                    <span id="targetThroughputValue" class="font-mono text-indigo-300 w-16 text-center">9/s</span>
+                                </div>
+                                <div id="throughputRange" class="text-xs text-center text-slate-400 mt-1">Range: 7-13 events/s</div>
+                            </div>
+                             <div class="grid grid-cols-2 gap-4 pt-2">
+                                <div>
+                                    <label for="deadVolume" class="block text-sm font-medium text-slate-300 mb-2">Setup Volume (µL)</label>
+                                    <input type="number" id="deadVolume" class="w-full p-2 rounded-md text-white input-glass" value="100">
+                                </div>
+                                <div>
+                                    <label for="flowRate" class="block text-sm font-medium text-slate-300 mb-2">Flow Rate (µL/min)</label>
+                                    <input type="number" id="flowRate" class="w-full p-2 rounded-md text-white input-glass" value="1.8">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Results -->
+                        <div class="bg-gray-900/50 p-6 rounded-lg flex flex-col justify-center">
+                            <h2 class="text-xl font-semibold text-center mb-4 text-white">Imaging Estimation</h2>
+                            <div class="space-y-4 text-center">
+                                <div class="bg-indigo-500/20 p-4 rounded-lg"><p class="text-sm text-indigo-200 font-medium">Est. Run Duration</p><p id="runDuration" class="text-3xl font-bold text-white">-</p></div>
+                                <div class="bg-sky-500/20 p-4 rounded-lg"><p class="text-sm text-sky-200 font-medium">Required Sample Volume</p><p id="requiredVolume" class="text-3xl font-bold text-white">-</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sorting Estimator Panel -->
+                <div id="panel-sorting" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                         <!-- Left Column: Inputs -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="sortSampleType" class="block text-sm font-medium text-slate-300 mb-2">Sample Type</label>
+                                <select id="sortSampleType" class="w-full p-3 rounded-lg text-white input-glass">
+                                    <option value="clean_fixed">Clean Fixed Cell Line</option>
+                                    <option value="live_homogenous">Live, Homogenous Cell Line</option>
+                                    <option value="live_heterogenous">Live, Heterogenous Sample</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="sortTargetPurity" class="block text-sm font-medium text-slate-300 mb-2">Target Purity (%)</label>
+                                    <input type="number" id="sortTargetPurity" value="70" min="0" max="100" class="w-full p-3 rounded-lg text-white input-glass">
+                                </div>
+                                <div>
+                                    <label for="sortOption" class="block text-sm font-medium text-slate-300 mb-2">Sorting Option</label>
+                                     <select id="sortOption" class="w-full p-3 rounded-lg text-white input-glass">
+                                        <option value="high_purity">High Purity</option>
+                                        <option value="high_yield">High Yield</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-md font-medium text-slate-100 mb-2">Cell Counts Per Well</h3>
+                                <div id="sortWellsContainer" class="space-y-2">
+                                    <!-- Wells will be generated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column: Results -->
+                        <div class="bg-gray-900/50 p-6 rounded-lg flex flex-col justify-center">
+                            <h2 class="text-xl font-semibold text-center mb-4 text-white">Sorting Estimation</h2>
+                            <div class="space-y-3 text-center">
+                                <div class="bg-sky-500/20 p-3 rounded-lg"><p class="text-xs sm:text-sm text-sky-200 font-medium">Required Conc.</p><p id="sortReqConc" class="text-lg sm:text-xl font-bold text-white">-</p></div>
+                                <div class="bg-sky-500/20 p-3 rounded-lg"><p class="text-xs sm:text-sm text-sky-200 font-medium">Minimum Volume</p><p id="sortMinVol" class="text-lg sm:text-xl font-bold text-white">-</p></div>
+                                <div class="bg-green-500/20 p-3 rounded-lg"><p class="text-sm text-green-200 font-medium">Est. Sort Duration</p><p id="sortDuration" class="text-xl font-bold text-white">-</p></div>
+                                <div class="bg-purple-500/20 p-3 rounded-lg"><p class="text-sm text-purple-200 font-medium">Recommended Mode</p><p id="sortRecMode" class="text-xl font-bold text-white">-</p></div>
+                            </div>
+                             <div class="text-center mt-4 text-xs text-slate-400 p-2 bg-gray-800 rounded">
+                                <p>Calculations assume a target throughput of 25 events/s, a flow rate of 1.8 µL/min, and a 150 µL dead volume.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning Message Area -->
+                <div id="warningMessage" class="mt-6 text-center text-amber-200 bg-amber-500/20 p-3 rounded-lg hidden"></div>
+            </div>
+        </div>
+        <footer class="text-center text-xs text-slate-400 py-4">&copy; 2025 Dr. Andres Nevarez. All Rights Reserved.</footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- UI ELEMENT REFERENCES ---
+            const ui = {
+                imagingTab: document.getElementById('tab-imaging'),
+                sortingTab: document.getElementById('tab-sorting'),
+                imagingPanel: document.getElementById('panel-imaging'),
+                sortingPanel: document.getElementById('panel-sorting'),
+                warningMessage: document.getElementById('warningMessage'),
+                // Imaging Inputs
+                targetImages: document.getElementById('targetImages'),
+                cellConcentration: document.getElementById('cellConcentration'),
+                deadVolume: document.getElementById('deadVolume'),
+                flowRate: document.getElementById('flowRate'),
+                targetThroughput: document.getElementById('targetThroughput'),
+                // Imaging Outputs
+                targetThroughputValue: document.getElementById('targetThroughputValue'),
+                throughputRange: document.getElementById('throughputRange'),
+                runDuration: document.getElementById('runDuration'),
+                requiredVolume: document.getElementById('requiredVolume'),
+                // Sorting Inputs
+                sortWellsContainer: document.getElementById('sortWellsContainer'),
+                sortTargetPurity: document.getElementById('sortTargetPurity'),
+                sortOption: document.getElementById('sortOption'),
+                // Sorting Outputs
+                sortReqConc: document.getElementById('sortReqConc'),
+                sortMinVol: document.getElementById('sortMinVol'),
+                sortDuration: document.getElementById('sortDuration'),
+                sortRecMode: document.getElementById('sortRecMode')
+            };
+
+            // --- TAB SWITCHING LOGIC ---
+            ui.imagingTab.addEventListener('click', () => switchTab('imaging'));
+            ui.sortingTab.addEventListener('click', () => switchTab('sorting'));
+
+            function switchTab(mode) {
+                const isImaging = mode === 'imaging';
+                const isSorting = mode === 'sorting';
+
+                ui.imagingTab.classList.toggle('active', isImaging);
+                ui.sortingTab.classList.toggle('active', isSorting);
+                
+                ui.imagingPanel.classList.toggle('hidden', !isImaging);
+                ui.sortingPanel.classList.toggle('hidden', !isSorting);
+                
+                if (isImaging) {
+                    calculateImagingParameters();
+                } else if (isSorting) {
+                    calculateSortingParameters();
+                }
+            }
+
+            // --- IMAGING ESTIMATOR ---
+            // Data from REM-I User Guide, Page 38, Table 3
+            const throughputData = [
+                { conc: 300000, min: 2, max: 8 }, { conc: 500000, min: 3, max: 13 },
+                { conc: 1000000, min: 5, max: 27 }, { conc: 2000000, min: 10, max: 53 },
+                { conc: 3000000, min: 15, max: 80 }, { conc: 10000000, min: 50, max: 267 }
+            ];
+
+            function getThroughputRange(concentration) {
+                if (concentration <= 0) return { min: 0, max: 0 };
+                // Find the two points the concentration is between to interpolate
+                for (let i = 0; i < throughputData.length - 1; i++) {
+                    if (concentration >= throughputData[i].conc && concentration <= throughputData[i+1].conc) {
+                        const p1 = throughputData[i];
+                        const p2 = throughputData[i+1];
+                        const factor = (concentration - p1.conc) / (p2.conc - p1.conc);
+                        const min = p1.min + factor * (p2.min - p1.min);
+                        const max = p1.max + factor * (p2.max - p1.max);
+                        return { min: Math.round(min), max: Math.round(max) };
+                    }
+                }
+                return throughputData[throughputData.length - 1]; // Return max if above range
+            }
+
+            function updateThroughputSlider() {
+                const cellConc = parseFloat(ui.cellConcentration.value) || 0;
+                const range = getThroughputRange(cellConc);
+                ui.targetThroughput.min = range.min;
+                ui.targetThroughput.max = range.max;
+                // Set a reasonable default value when range changes, e.g., 25% of the way in
+                const defaultValue = Math.round(range.min + (range.max - range.min) * 0.25);
+                ui.targetThroughput.value = defaultValue;
+                ui.throughputRange.textContent = `Range: ${range.min}-${range.max} events/s`;
+                calculateImagingParameters();
+            }
+
+            function formatDuration(totalMinutes) {
+                if (isNaN(totalMinutes) || totalMinutes <= 0) return "-";
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = Math.round(totalMinutes % 60);
+                let result = '';
+                if (hours > 0) result += `${hours}h `;
+                result += `${minutes}m`;
+                return result;
+            }
+
+            function calculateImagingParameters() {
+                const targetImages = parseFloat(ui.targetImages.value) || 0;
+                const cellConcentration = parseFloat(ui.cellConcentration.value) || 0;
+                const deadVolume = parseFloat(ui.deadVolume.value) || 100;
+                const flowRate = parseFloat(ui.flowRate.value) || 1.8;
+                const targetThroughput = parseFloat(ui.targetThroughput.value) || 0;
+
+                ui.targetThroughputValue.textContent = `${targetThroughput}/s`;
+
+                if (targetImages <= 0 || cellConcentration <= 0 || targetThroughput <= 0) {
+                    ui.runDuration.textContent = "-";
+                    ui.requiredVolume.textContent = "-";
+                    ui.warningMessage.classList.add('hidden');
+                    return;
+                }
+
+                const durationMinutes = (targetImages / targetThroughput) / 60;
+                const requiredVolume = (durationMinutes * flowRate) + deadVolume;
+                
+                ui.runDuration.textContent = formatDuration(durationMinutes);
+                ui.requiredVolume.textContent = `${Math.ceil(requiredVolume)} µL`;
+                
+                if (cellConcentration > 3000000) {
+                    ui.warningMessage.textContent = 'Warning: HFM Analysis is not available for concentrations > 3M cells/mL.';
+                    ui.warningMessage.classList.remove('hidden');
+                } else {
+                    ui.warningMessage.classList.add('hidden');
+                }
+            }
+            
+            // --- SORTING ESTIMATOR ---
+            function createWellInputs() {
+                for (let i = 1; i <= 6; i++) {
+                    const wellDiv = document.createElement('div');
+                    wellDiv.className = 'grid grid-cols-10 gap-2 items-center';
+                    wellDiv.innerHTML = `
+                        <label class="col-span-2 text-sm font-medium text-slate-400">Well ${i}</label>
+                        <input type="number" id="well-count-${i}" class="col-span-4 w-full p-2 rounded-md text-sm input-glass" placeholder="Count">
+                        <input type="number" id="well-freq-${i}" class="col-span-4 w-full p-2 rounded-md text-sm input-glass" placeholder="Freq. (%)" step="0.01">
+                    `;
+                    ui.sortWellsContainer.appendChild(wellDiv);
+                }
+            }
+
+            function calculateSortingParameters() {
+                let totalCellsNeeded = 0;
+                let totalFreq = 0;
+                let maxCount = 0;
+                for (let i = 1; i <= 6; i++) {
+                    const count = parseFloat(document.getElementById(`well-count-${i}`).value) || 0;
+                    maxCount = Math.max(maxCount, count);
+                    const freq = parseFloat(document.getElementById(`well-freq-${i}`).value) || 0;
+                    if (count > 0 && freq > 0) {
+                        totalCellsNeeded += count / (freq / 100);
+                    }
+                }
+                
+                const targetPurity = parseFloat(ui.sortTargetPurity.value) / 100 || 0.7;
+                const sortOption = ui.sortOption.value;
+                const yieldFactor = sortOption === 'high_yield' ? 0.85 : 0.7; // Simplified yield factor based on option
+                
+                const totalEventsToProcess = totalCellsNeeded / yieldFactor;
+                
+                if (!isFinite(totalEventsToProcess) || totalEventsToProcess <= 0) {
+                    ui.sortReqConc.textContent = "-";
+                    ui.sortMinVol.textContent = "-";
+                    ui.sortDuration.textContent = "-";
+                    ui.sortRecMode.textContent = "-";
+                    return;
+                }
+
+                const targetThroughput = 25; // Safe estimate based on User Guide (pg. 40-41)
+                const sortDurationSeconds = totalEventsToProcess / targetThroughput;
+                const sortDurationMinutes = sortDurationSeconds / 60;
+                
+                const requiredVolume = (sortDurationMinutes * 1.8) + 150; // Flow rate of 1.8 µL/min, 150 µL dead volume
+                const requiredConcentration = totalEventsToProcess / requiredVolume;
+
+                ui.sortReqConc.textContent = `${(requiredConcentration * 1000).toLocaleString(undefined, {maximumFractionDigits: 0})} cells/mL`;
+                ui.sortMinVol.textContent = `${Math.ceil(requiredVolume)} µL`;
+                ui.sortDuration.textContent = formatDuration(sortDurationMinutes);
+                
+                // User Guide, Page 43: Serial sort up to 3000, Parallel up to 1000.
+                ui.sortRecMode.textContent = maxCount > 1000 ? 'Serial' : 'Parallel';
+            }
+
+            // --- INITIALIZATION & EVENT LISTENERS ---
+            function init() {
+                createWellInputs();
+                
+                // Imaging listeners
+                const imagingInputs = ['targetImages', 'cellConcentration', 'deadVolume', 'flowRate', 'targetThroughput'];
+                imagingInputs.forEach(id => ui[id].addEventListener('input', calculateImagingParameters));
+                
+                ui.cellConcentration.addEventListener('input', updateThroughputSlider);
+
+                // Sorting listeners
+                const sortingInputs = ['sortTargetPurity', 'sortOption'];
+                sortingInputs.forEach(id => ui[id].addEventListener('input', calculateSortingParameters));
+                for (let i=1; i<=6; i++){
+                    document.getElementById(`well-count-${i}`).addEventListener('input', calculateSortingParameters);
+                    document.getElementById(`well-freq-${i}`).addEventListener('input', calculateSortingParameters);
+                }
+
+                // Initial Calculations
+                updateThroughputSlider();
+                switchTab('imaging');
+            }
+            
+            init();
+        });
+    </script>
+</body>
+</html>
+
